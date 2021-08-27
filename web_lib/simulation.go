@@ -13,6 +13,7 @@ type ABM struct {
 
 	world      World
 	reportFunc func(*ABM)
+	chComm     chan string
 }
 
 // New creates new ABM simulation engine with default
@@ -26,6 +27,12 @@ func NewSimulation() *ABM {
 func (a *ABM) SetWorld(w World) {
 	if a.world == nil {
 		a.world = w
+	}
+}
+
+func (a *ABM) SetComm(c chan string) {
+	if a.chComm == nil {
+		a.chComm = c
 	}
 }
 
@@ -69,8 +76,38 @@ func (a *ABM) Iteration() int {
 	return a.i
 }
 
+func (a *ABM) checkComm() string {
+	select {
+	case comm, ok := <-a.chComm:
+		if ok {
+			// comm to process
+			return comm
+		} else {
+			// channel closed
+			return "closed"
+		}
+	default:
+		// no comm
+		return ""
+	}
+}
+
+func (a *ABM) waitForComm() {
+	<-a.chComm
+}
+
+func (a *ABM) dealWithComm() {
+	comm := a.checkComm()
+	if comm != "" {
+		if comm == "stop" {
+			a.waitForComm()
+		}
+	}
+}
+
 func (a *ABM) StartSimulation() {
 	for i := 0; i < a.Limit(); i++ {
+		a.dealWithComm()
 
 		a.i = i
 		if a.World() != nil {

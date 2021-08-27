@@ -65,11 +65,25 @@ function setup() {
 }
 
 function startSim() {
-    // TODO
     // change button to Pause and change onclick event
-
+    button = document.getElementById("start/stop");
+    button.innerHTML = "Stop";
+    button.onclick = stopSim ;
     // Start the animation frame after pressing start button
     window.requestAnimationFrame(moveDot)
+}
+
+function stopSim(){
+    try {
+        let response = fetch("/simulation", {
+            headers: {
+                'Accept': 'application/json'
+            },
+            method: "PUT"
+            });
+    } catch(e) {
+        console.log(e)
+    }
 }
 
 // This function moves the dot down and to the right in each frame.
@@ -96,7 +110,9 @@ async function moveDot() {
 }
 
 function sleep() { 
-    return new Promise(requestAnimationFrame); 
+    return new Promise(function(resolve, reject) {
+        resolve(requestAnimationFrame)
+    }); 
 }
 
 async function fetch_agents() {

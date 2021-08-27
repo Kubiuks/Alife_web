@@ -12,7 +12,7 @@ import (
 	"github.com/Kubiuks/Alife_web/web_model"
 )
 
-func runSim(numAg int, wD, bA, DSIm string, chGrid chan []web_lib.Agent) {
+func runSim(numAg int, wD, bA, DSIm string, chGrid chan []web_lib.Agent, chComm chan string) {
 	start := time.Now()
 	//----------------------------------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------------------------------
@@ -47,8 +47,8 @@ func runSim(numAg int, wD, bA, DSIm string, chGrid chan []web_lib.Agent) {
 	grid2D := web_model.NewWorld(w, h, numberOfAgents, visionLength, visionAngle)
 	a.SetWorld(grid2D)
 
-	// channels for communication with UI
-	//chGrid := make(chan []web_lib.Agent)
+	// channel for communication with the Engine (ABM)
+	a.SetComm(chComm)
 
 	//check if correct mode
 	errDSI := checkDSImode(DSImode)
@@ -81,6 +81,7 @@ func runSim(numAg int, wD, bA, DSIm string, chGrid chan []web_lib.Agent) {
 
 	a.StartSimulation()
 	close(chGrid)
+	close(chComm)
 
 	elapsed := time.Since(start)
 	log.Printf("runtime: %s", elapsed)

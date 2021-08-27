@@ -30,6 +30,7 @@ type Parameters struct {
 }
 
 var chGrid chan []web_lib.Agent
+var chComm chan string
 
 func receive_agents_from_sim() All_agents {
 	var data All_agents
@@ -46,6 +47,10 @@ func receive_agents_from_sim() All_agents {
 	return data
 }
 
+func comm_simulation() {
+	chComm <- "stop"
+}
+
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	buf := &bytes.Buffer{}
 	err := tpl.Execute(buf, nil)
@@ -60,15 +65,12 @@ func agentsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		// Serve Agents positions taken from the simulation
-		// TODO
-		// change dummy data for real connection with UI from simulation
 		data := receive_agents_from_sim()
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(data)
 		return
 	case http.MethodPost:
 		// Start a new Simulation
-		// TODO
 		var params Parameters
 		err := json.NewDecoder(r.Body).Decode(&params)
 		if err != nil {
@@ -76,10 +78,16 @@ func agentsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		chGrid = make(chan []web_lib.Agent)
-		go runSim(params.NumAgents, params.World, params.BondedAgents, params.DSImode, chGrid)
+		chComm = make(chan string)
+		go runSim(params.NumAgents, params.World, params.BondedAgents, params.DSImode, chGrid, chComm)
 		data := receive_agents_from_sim()
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(data)
+		return
+	case http.MethodPut:
+		// Send command to the Simulation
+		// TODO get actual data from frontend
+		comm_simulation()
 		return
 	default:
 		// Give an error message.
